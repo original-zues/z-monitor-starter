@@ -1,4 +1,4 @@
-package com.z.monitor.autoconfigure;
+package com.z.monitor;
 
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;

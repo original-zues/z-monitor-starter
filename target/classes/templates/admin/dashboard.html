@@ -227,7 +227,7 @@
 
     <script>
         const token = sessionStorage.getItem('admin_token');
-        if (!token) window.location.href = '/z-monitor/login';
+        if (!token) window.location.href = '/admin/login';
 
         // Time Engine: Asia/Yangon (UTC +6:30)
         function toYangonTime(dateInput) {
@@ -250,7 +250,7 @@
         async function fetchActuator(endpoint) {
             try {
                 const r = await fetch(`/actuator/${endpoint}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                if (r.status === 401) window.location.href = '/z-monitor/login';
+                if (r.status === 401) window.location.href = '/admin/login';
                 return await r.json();
             } catch (e) { return null; }
         }
@@ -284,7 +284,7 @@
             document.getElementById('lastUpdatedYangon').textContent = `Sync: ${nowYangon}`;
 
             // 1. Business & User State
-            const biz = await (await fetch('/z-monitor/business-metrics', { headers: { 'Authorization': `Bearer ${token}` } })).json();
+            const biz = await (await fetch('/api/v1/admin/business-metrics', { headers: { 'Authorization': `Bearer ${token}` } })).json();
             if (biz) {
                 document.getElementById('activeUsers').textContent = biz.activeUsers;
                 document.getElementById('totalUsers').textContent = biz.totalUsers.toLocaleString();
@@ -409,7 +409,7 @@
             }
         }
 
-        function logout() { sessionStorage.clear(); window.location.href = '/z-monitor/login'; }
+        function logout() { sessionStorage.clear(); window.location.href = '/admin/login'; }
 
         // Start Node
         updateTelemetry();

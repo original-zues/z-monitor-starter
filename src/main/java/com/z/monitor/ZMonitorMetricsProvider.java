@@ -1,4 +1,4 @@
-package com.z.monitor.autoconfigure;
+package com.z.monitor;
 
 import java.util.Map;
 

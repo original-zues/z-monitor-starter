@@ -1,4 +1,4 @@
-package com.z.monitor.autoconfigure;
+package com.z.monitor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/admin")
+@RequestMapping("/z-monitor")
 public class ZMonitorMetricsController {
 
     private final List<ZMonitorMetricsProvider> metricsProviders;
