@@ -1,0 +1,42 @@
+package com.z.monitor.autoconfigure;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/v1/admin")
+public class ZMonitorMetricsController {
+
+    private final List<ZMonitorMetricsProvider> metricsProviders;
+
+    public ZMonitorMetricsController(List<ZMonitorMetricsProvider> metricsProviders) {
+        this.metricsProviders = metricsProviders;
+    }
+
+    @GetMapping("/business-metrics")
+    public ResponseEntity<Map<String, Object>> getMonitorMetrics() {
+        Map<String, Object> allMetrics = new HashMap<>();
+        
+        // Merge metrics from all registered providers
+        if (metricsProviders != null) {
+            for (ZMonitorMetricsProvider provider : metricsProviders) {
+                Map<String, Object> moduleMetrics = provider.getMetrics();
+                if (moduleMetrics != null) {
+                    allMetrics.putAll(moduleMetrics);
+                }
+            }
+        }
+        
+        // Default fallbacks for the UI to prevent errors
+        allMetrics.putIfAbsent("activeUsers", 0);
+        allMetrics.putIfAbsent("totalUsers", 0);
+        allMetrics.putIfAbsent("newUsersToday", 0);
+        
+        return ResponseEntity.ok(allMetrics);
+    }
+}
