@@ -70,10 +70,10 @@
             loader.classList.remove('hidden');
             
             try {
-                const response = await fetch('/api/v1/auth/authenticate', {
+                const response = await fetch('/z-monitor/auth', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ar7Id: username, password: password })
+                    body: JSON.stringify({ username: username, password: password })
                 });
                 
                 const data = await response.json();
@@ -91,7 +91,7 @@
                     sessionStorage.setItem('admin_user', data.name || username);
                     
                     // Redirect to dashboard
-                    window.location.href = '/admin/dashboard';
+                    window.location.href = '/z-monitor/dashboard';
                 } else {
                     errorDiv.textContent = data.errorMessage || 'Invalid credentials.';
                     errorDiv.classList.remove('hidden');
