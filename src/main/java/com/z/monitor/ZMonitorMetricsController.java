@@ -32,11 +32,6 @@ public class ZMonitorMetricsController {
             }
         }
         
-        // Default fallbacks for the UI to prevent errors
-        allMetrics.putIfAbsent("activeUsers", 0);
-        allMetrics.putIfAbsent("totalUsers", 0);
-        allMetrics.putIfAbsent("newUsersToday", 0);
-        
         return ResponseEntity.ok(allMetrics);
     }
 }

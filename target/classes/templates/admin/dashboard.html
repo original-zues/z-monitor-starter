@@ -403,18 +403,27 @@
 
             // Health
             const health = await fetchActuator('health');
+            const healthContainer = document.getElementById('healthDetailsGrid');
             if (health) {
                 const isUp = health.status === 'UP';
                 document.getElementById('globalHealth').textContent = isUp ? 'OPTIMIZED' : 'DEGRADED';
                 document.getElementById('globalHealth').className = `text-xs font-semibold ${isUp ? 'text-emerald-500' : 'text-rose-500'}`;
                 document.getElementById('healthDot').className = `w-2 h-2 rounded-full ${isUp ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500'}`;
                 
-                document.getElementById('healthDetailsGrid').innerHTML = Object.entries(health.components || {}).map(([name, data]) => `
-                    <div class="flex justify-between items-center text-[11px] font-medium">
-                        <span class="text-slate-500 uppercase tracking-tight">${name}</span>
-                        <span class="status-pill ${data.status === 'UP' ? 'status-up' : 'status-down'}">${data.status}</span>
-                    </div>
-                `).join('');
+                // Handle both components and details (Spring Boot health structure variants)
+                const components = health.components || health.details || {};
+                healthContainer.innerHTML = Object.entries(components).length > 0 
+                    ? Object.entries(components).map(([name, data]) => `
+                        <div class="flex justify-between items-center text-[11px] font-medium">
+                            <span class="text-slate-500 uppercase tracking-tight">${name}</span>
+                            <span class="status-pill ${data.status === 'UP' ? 'status-up' : 'status-down'}">${data.status || 'N/A'}</span>
+                        </div>
+                    `).join('')
+                    : '<div class="text-[10px] text-slate-600 italic">No sub-components reported</div>';
+            } else {
+                document.getElementById('globalHealth').textContent = 'OFFLINE';
+                document.getElementById('healthDot').className = 'w-2 h-2 rounded-full bg-slate-700';
+                healthContainer.innerHTML = '<div class="text-[10px] text-rose-500 italic">Failed to fetch health data</div>';
             }
 
             // Audit Registry
