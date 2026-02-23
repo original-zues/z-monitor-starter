@@ -100,7 +100,7 @@
             </button>
             <button onclick="switchTab('metrics')" id="btn-metrics" class="sidebar-item w-full">
                 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                Performance
+                Metrics Explorer
             </button>
         </nav>
 
@@ -265,6 +265,62 @@
                         </thead>
                         <tbody id="logTable" class="divide-y divide-white/5"></tbody>
                     </table>
+                </div>
+            </div>
+
+            <!-- TAB: Metrics Explorer -->
+            <div id="tab-metrics" class="tab-content space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Metric Discovery</h3>
+                        <p class="text-xs text-slate-500">Search and analyze all Micrometer meters registered in the JVM.</p>
+                    </div>
+                    <div class="relative w-full md:w-96">
+                        <input type="text" id="metricSearch" placeholder="Search metrics (e.g. hikari, jvm, http)..." 
+                               class="bg-slate-900 border border-white/10 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 ring-blue-500 w-full text-white placeholder-slate-600">
+                        <svg class="w-5 h-5 text-slate-600 absolute right-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Metric List -->
+                    <div class="lg:col-span-4 card overflow-hidden flex flex-col h-[600px]">
+                        <div class="px-4 py-3 bg-white/[0.02] border-b border-white/5 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Available Meters</div>
+                        <div id="metricNamesList" class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
+                            <!-- Metric names will appear here -->
+                        </div>
+                    </div>
+
+                    <!-- Metric Detail -->
+                    <div id="metricDetailView" class="lg:col-span-8 card p-8 hidden">
+                        <div class="flex justify-between items-start mb-8">
+                            <div>
+                                <h2 id="selectedMetricName" class="text-2xl font-bold text-white tracking-tight mb-1">---</h2>
+                                <p id="selectedMetricDesc" class="text-sm text-slate-400">---</p>
+                            </div>
+                            <div id="selectedMetricBaseUnit" class="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg text-[10px] font-black uppercase tracking-widest">---</div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8" id="metricMeasurements">
+                            <!-- Measurements will appear here -->
+                        </div>
+
+                        <div class="space-y-4">
+                            <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Available Tags / Dimensions</h4>
+                            <div id="metricTags" class="flex flex-wrap gap-2">
+                                <!-- Tags will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="metricEmptyState" class="lg:col-span-8 card flex flex-col items-center justify-center text-center p-20">
+                        <div class="w-16 h-16 bg-slate-800 rounded-2xl flex items-center justify-center text-slate-600 mb-4">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        </div>
+                        <h3 class="text-white font-bold mb-2">Select a metric to view details</h3>
+                        <p class="text-sm text-slate-500 max-w-xs">Discovery engine found <span id="metricCountDiscovered" class="text-blue-400 font-bold">0</span> unique meters in your application context.</p>
+                    </div>
                 </div>
             </div>
 
@@ -449,6 +505,74 @@
             
             if (tabId === 'loggers') fetchLoggers();
             if (tabId === 'threads') fetchThreads();
+            if (tabId === 'metrics') fetchDiscoverableMetrics();
+        }
+
+        // Metrics Explorer Logic
+        let allMetricNames = [];
+        async function fetchDiscoverableMetrics() {
+            const data = await fetchActuator('metrics');
+            if (data && data.names) {
+                allMetricNames = data.names.sort();
+                document.getElementById('metricCountDiscovered').textContent = allMetricNames.length;
+                renderMetricList(allMetricNames);
+                
+                document.getElementById('metricSearch').oninput = (e) => {
+                    const query = e.target.value.toLowerCase();
+                    const filtered = allMetricNames.filter(n => n.toLowerCase().includes(query));
+                    renderMetricList(filtered);
+                };
+            }
+        }
+
+        function renderMetricList(names) {
+            const container = document.getElementById('metricNamesList');
+            container.innerHTML = names.map(name => `
+                <button onclick="viewMetricDetail('${name}')" 
+                        class="w-full text-left px-4 py-2.5 rounded-lg text-xs font-medium transition-all hover:bg-blue-500/10 hover:text-blue-400 border border-transparent hover:border-blue-500/20 text-slate-400 truncate">
+                    ${name}
+                </button>
+            `).join('');
+        }
+
+        async function viewMetricDetail(name) {
+            const data = await fetchActuator(`metrics/${name}`);
+            if (!data) return;
+
+            // UI Transitions
+            document.getElementById('metricEmptyState').classList.add('hidden');
+            const detailView = document.getElementById('metricDetailView');
+            detailView.classList.remove('hidden');
+            detailView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Basic Info
+            document.getElementById('selectedMetricName').textContent = name;
+            document.getElementById('selectedMetricDesc').textContent = data.description || 'No description available for this meter.';
+            document.getElementById('selectedMetricBaseUnit').textContent = data.baseUnit || 'Unitless';
+
+            // Measurements
+            document.getElementById('metricMeasurements').innerHTML = data.measurements.map(m => `
+                <div class="bg-slate-900/50 border border-white/5 p-4 rounded-xl">
+                    <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">${m.statistic}</p>
+                    <p class="text-xl font-bold text-white mono">${m.value.toLocaleString(undefined, { maximumFractionDigits: 4 })}</p>
+                </div>
+            `).join('');
+
+            // Tags
+            const tagsContainer = document.getElementById('metricTags');
+            if (data.availableTags && data.availableTags.length > 0) {
+                tagsContainer.innerHTML = data.availableTags.map(tag => `
+                    <div class="flex flex-col bg-white/[0.03] border border-white/5 p-3 rounded-lg min-w-[120px]">
+                        <span class="text-[9px] font-black text-blue-500 uppercase mb-2">${tag.tag}</span>
+                        <div class="flex flex-wrap gap-1">
+                            ${tag.values.slice(0, 5).map(v => `<span class="px-1.5 py-0.5 bg-slate-800 text-[10px] text-slate-400 rounded">${v}</span>`).join('')}
+                            ${tag.values.length > 5 ? `<span class="text-[10px] text-slate-600 pl-1">+${tag.values.length - 5} more</span>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                tagsContainer.innerHTML = '<p class="text-xs text-slate-600 italic">No dimensions available for this metric.</p>';
+            }
         }
 
         async function fetchLoggers() {
