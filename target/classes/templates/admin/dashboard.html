@@ -332,7 +332,7 @@
         </div>
     </main>
 
-    <script>
+    <script th:inline="javascript">
         // Use sessionStorage for authentication persistence
         const token = sessionStorage.getItem('admin_token');
         if (!token) window.location.href = '/z-monitor/login';
@@ -639,7 +639,9 @@
 
         // Start Node
         updateTelemetry();
-        const refreshInterval = [[${refreshInterval}]];
+        /*<![CDATA[*/
+        const refreshInterval = /*[[${refreshInterval}]]*/ 5000;
+        /*]]>*/
         setInterval(updateTelemetry, refreshInterval);
     </script>
 </body>
