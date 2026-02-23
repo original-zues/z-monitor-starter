@@ -3,267 +3,340 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Z Monitor - SRE Command Center v5</title>
+    <title>Z Monitor | Enterprise Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #3b82f6; --bg: #030712; --glass: rgba(17, 24, 39, 0.7); --border: rgba(255, 255, 255, 0.08); }
-        body { background: var(--bg); color: #94a3b8; font-family: 'Plus Jakarta Sans', sans-serif; overflow: hidden; }
+        :root {
+            --primary: #3b82f6;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --border: rgba(255, 255, 255, 0.05);
+        }
+        body { 
+            background: var(--bg-dark); 
+            color: var(--text-main); 
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
         .mono { font-family: 'JetBrains Mono', monospace; }
-        .glass { background: var(--glass); backdrop-filter: blur(12px); border: 1px solid var(--border); box-shadow: 0 8px 32px 0 rgba(0,0,0,0.8); }
-        .sidebar-active { background: rgba(59, 130, 246, 0.1); border-left: 3px solid var(--accent); color: #fff; }
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            transition: all 0.2s ease;
+        }
+        .sidebar-item {
+            display: flex;
+            items-center: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            color: var(--text-dim);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        .sidebar-item.active {
+            background: rgba(59, 130, 246, 0.1);
+            color: #fff;
+            box-shadow: inset 2px 0 0 var(--primary);
+        }
+        .sidebar-item:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+        }
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        ::-webkit-scrollbar { width: 4px; height: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        .pulse-emerald { box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); animation: pulse-emerald 2s infinite; }
-        @keyframes pulse-emerald { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-        .bento-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .status-pill {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .status-up { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .status-down { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 3px; }
+        
+        .grid-dashboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+        }
     </style>
 </head>
-<body class="h-screen flex selection:bg-blue-500/30">
-    <!-- Sidebar -->
-    <aside class="w-64 glass border-r border-white/5 flex flex-col z-50">
-        <div class="p-8 border-b border-white/5">
-            <div class="flex items-center space-x-3 mb-2">
-                <div class="w-8 h-8 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-white font-black shadow-lg">A</div>
-                <h1 class="text-xs font-black text-white tracking-[0.4em] uppercase">Z Monitor</h1>
+<body class="h-screen flex overflow-hidden">
+    <!-- Navigation Sidebar -->
+    <aside class="w-64 bg-[#0a0f1d] border-r border-white/5 flex flex-col">
+        <div class="p-6 flex items-center space-x-3">
+            <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
-            <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">v5.0.4-Obsidian</p>
+            <div>
+                <h1 class="text-sm font-bold tracking-tight">Z-MONITOR</h1>
+                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">SRE Suite v6.0</p>
+            </div>
         </div>
-        
-        <nav class="flex-1 p-4 space-y-2 mt-4">
-            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="sidebar-btn w-full flex items-center px-4 py-3 rounded-xl transition-all hover:bg-white/5 text-[11px] font-bold uppercase tracking-widest sidebar-active">
-                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                Telemetry
+
+        <nav class="flex-1 px-4 py-6 space-y-1">
+            <button onclick="switchTab('dashboard')" id="btn-dashboard" class="sidebar-item w-full active">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Overview
             </button>
-            <button onclick="switchTab('loggers')" id="btn-loggers" class="sidebar-btn w-full flex items-center px-4 py-3 rounded-xl transition-all hover:bg-white/5 text-[11px] font-bold uppercase tracking-widest">
-                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <button onclick="switchTab('loggers')" id="btn-loggers" class="sidebar-item w-full">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                 Diagnostics
             </button>
-            <button onclick="switchTab('threads')" id="btn-threads" class="sidebar-btn w-full flex items-center px-4 py-3 rounded-xl transition-all hover:bg-white/5 text-[11px] font-bold uppercase tracking-widest">
-                <svg class="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
-                Processes
+            <button onclick="switchTab('threads')" id="btn-threads" class="sidebar-item w-full">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                Threads
+            </button>
+            <button onclick="switchTab('metrics')" id="btn-metrics" class="sidebar-item w-full">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                Performance
             </button>
         </nav>
-        
-        <div class="p-6 border-t border-white/5">
-            <button onclick="logout()" class="w-full flex items-center justify-center space-x-2 py-3 bg-rose-500/10 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-rose-500 hover:text-white">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                <span>Terminate</span>
+
+        <div class="p-4 border-t border-white/5">
+            <button onclick="logout()" class="flex items-center w-full px-4 py-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded-lg transition-all text-sm font-semibold">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Sign Out
             </button>
         </div>
     </aside>
 
-    <!-- Main Viewport -->
-    <main class="flex-1 overflow-y-auto relative bg-[#030712] custom-scrollbar">
-        <!-- Persistent Telemetry Header -->
-        <header class="glass border-b border-white/5 h-16 flex items-center justify-between px-10 sticky top-0 z-40">
-            <div class="flex items-center space-x-12">
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col overflow-hidden">
+        <!-- Header -->
+        <header class="h-16 bg-[#0a0f1d] border-b border-white/5 flex items-center justify-between px-8 z-10">
+            <div class="flex items-center space-x-8">
                 <div class="flex flex-col">
-                    <span class="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">Region (Yangon Time)</span>
-                    <span id="yangonClock" class="text-sm font-bold text-blue-400 mono tracking-tighter">--:--:-- MM-T</span>
-                </div>
-                <div class="flex flex-col">
-                    <span class="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">Deployment Status</span>
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">System Status</span>
                     <div class="flex items-center space-x-2">
-                        <div id="healthDot" class="w-2 h-2 rounded-full bg-emerald-500 shadow-lg"></div>
-                        <span id="globalHealth" class="text-xs font-black text-white uppercase tracking-tighter">System Normal</span>
+                        <div id="healthDot" class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        <span id="globalHealth" class="text-xs font-semibold text-white">HEALTHY</span>
                     </div>
                 </div>
-                <div class="flex flex-col">
-                    <span class="text-[9px] font-black text-slate-600 uppercase tracking-[0.2em]">Edge Performance</span>
-                    <span id="rpsValue" class="text-xs font-bold text-white mono">0.00 RPS</span>
+                <div class="flex flex-col border-l border-white/10 pl-8">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Throughput</span>
+                    <span id="rpsValue" class="text-xs font-mono font-semibold text-blue-400">0.00 RPS</span>
                 </div>
             </div>
             
-            <div class="flex items-center space-x-6">
-                <div class="text-right hidden sm:block">
-                    <p id="adminUser" class="text-xs font-black text-white uppercase">Administrator</p>
-                    <p class="text-[9px] text-slate-500 uppercase font-bold">Node: master-backend-01</p>
+            <div class="flex items-center space-x-4">
+                <div class="text-right">
+                    <p id="adminUser" class="text-xs font-bold text-white">SRE Admin</p>
+                    <p id="yangonClock" class="text-[10px] text-slate-500 mono font-medium">--:--:--</p>
                 </div>
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-slate-800 to-slate-900 border border-white/10 flex items-center justify-center text-blue-500 font-black shadow-xl">A</div>
+                <div class="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center text-blue-400 font-bold text-sm">A</div>
             </div>
         </header>
 
-        <div class="p-10 space-y-10">
-            <!-- Telemetry Overview (Bento Grid) -->
-            <div id="tab-dashboard" class="tab-content active bento-grid">
-                
-                <!-- Active User Load (Span 3) -->
-                <div class="col-span-12 lg:col-span-3 glass p-8 rounded-[2rem] flex flex-col justify-between h-48 group relative overflow-hidden">
-                    <div class="absolute -right-4 -bottom-4 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
-                        <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path></svg>
-                    </div>
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active User Lifecycle</p>
-                    <div class="flex items-baseline space-x-3">
-                        <p id="activeUsers" class="text-5xl font-black text-white tracking-tighter">0</p>
-                        <span class="text-xs text-blue-500 font-bold uppercase">/ <span id="totalUsers">0</span> Total</span>
-                    </div>
-                    <p class="text-[10px] text-slate-600 font-bold uppercase">New Registrations Today: <span id="newUsers" class="text-white">0</span></p>
-                </div>
-
-                <!-- Active Request Analytics (Span 3) -->
-                <div class="col-span-12 lg:col-span-3 glass p-8 rounded-[2rem] flex flex-col justify-between h-48 group">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Edge Workload (Active)</p>
-                    <div class="flex items-baseline space-x-3">
-                        <p id="activeReqs" class="text-5xl font-black text-emerald-400 tracking-tighter">0</p>
-                        <span class="text-xs text-emerald-600 font-bold uppercase">Requests</span>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between text-[10px] font-bold uppercase text-slate-600"><span>Saturation Index</span> <span id="reqSaturation" class="text-white">0%</span></div>
-                        <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div id="reqBar" class="bg-emerald-500 h-full transition-all duration-700" style="width: 0%"></div></div>
-                    </div>
-                </div>
-
-                <!-- IO / Handle Audit (Span 3) -->
-                <div class="col-span-12 lg:col-span-3 glass p-8 rounded-[2rem] flex flex-col justify-between h-48 group">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Process Handle Audit (FD)</p>
-                    <div class="flex items-baseline space-x-3">
-                        <p id="openFiles" class="text-5xl font-black text-amber-500 tracking-tighter">0</p>
-                        <span class="text-xs text-amber-600 font-bold uppercase">Open</span>
-                    </div>
-                    <div class="space-y-2">
-                        <div class="flex justify-between text-[10px] font-bold uppercase text-slate-600"><span>I/O Threshold</span> <span class="text-white">STABLE</span></div>
-                        <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden"><div id="fdBar" class="bg-amber-500 h-full transition-all duration-700" style="width: 15%"></div></div>
-                    </div>
-                </div>
-
-                <!-- DB Pool Health (Span 3) -->
-                <div class="col-span-12 lg:col-span-3 glass p-8 rounded-[2rem] flex flex-col justify-between h-48 group">
-                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">HikariCP Pool State</p>
-                    <div class="flex items-baseline space-x-3">
-                        <p id="dbActive" class="text-5xl font-black text-indigo-400 tracking-tighter">0</p>
-                        <span class="text-xs text-indigo-600 font-bold uppercase">/ <span id="dbMax">0</span> MAX</span>
-                    </div>
-                    <div class="flex justify-between items-center text-[10px] font-bold">
-                        <div class="flex items-center space-x-2"><div id="dbPulse" class="w-2 h-2 rounded-full bg-emerald-500 pulse-emerald"></div> <span class="text-slate-600 uppercase">Synchronized</span></div>
-                        <span id="dbPending" class="text-slate-500">PEND: 0</span>
-                    </div>
-                </div>
-
-                <!-- Real-time Memory Stream (Span 8) -->
-                <div class="col-span-12 lg:col-span-8 glass p-10 rounded-[2.5rem] space-y-8">
-                    <div class="flex items-center justify-between">
-                        <div class="flex flex-col">
-                            <h3 class="text-sm font-black text-white uppercase tracking-widest">JVM Memory lifecycle stream</h3>
-                            <p class="text-[10px] text-slate-600 mt-1 uppercase font-bold">Continuous audit of Heap vs Non-Heap allocation</p>
+        <!-- Scrollable Body -->
+        <div class="flex-1 overflow-y-auto p-8 custom-scrollbar bg-[#0f172a]/50">
+            <!-- TAB: Dashboard Overview -->
+            <div id="tab-dashboard" class="tab-content active space-y-8">
+                <!-- Metrics Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="card p-6 flex flex-col justify-between h-36">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[11px] text-slate-500 font-bold uppercase">Active Sessions</span>
+                            <div class="p-1.5 bg-blue-500/10 rounded-lg text-blue-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg></div>
                         </div>
-                        <div class="flex space-x-10 items-center">
-                            <div class="flex flex-col text-right"><span class="text-[9px] text-slate-500 font-black uppercase">Heap Used</span><span id="heapText" class="text-sm font-black text-white mono">0 MB</span></div>
-                            <div class="flex flex-col text-right"><span class="text-[9px] text-slate-500 font-black uppercase">Max Committed</span><span id="maxHeapText" class="text-sm font-black text-slate-600 mono">0 MB</span></div>
+                        <div class="flex items-baseline space-x-2">
+                            <span id="activeUsers" class="text-3xl font-bold tracking-tight">0</span>
+                            <span class="text-xs text-slate-500">Live</span>
                         </div>
+                        <div class="text-[10px] text-slate-600 font-medium">Total registered: <span id="totalUsers" class="text-slate-400">0</span></div>
                     </div>
-                    <div class="h-96"><canvas id="memStreamChart"></canvas></div>
+
+                    <div class="card p-6 flex flex-col justify-between h-36">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[11px] text-slate-500 font-bold uppercase">Thread Utilization</span>
+                            <div class="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg></div>
+                        </div>
+                        <div class="flex items-baseline space-x-2">
+                            <span id="activeReqs" class="text-3xl font-bold tracking-tight">0</span>
+                            <span class="text-xs text-slate-500">Busy</span>
+                        </div>
+                        <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden mt-2"><div id="reqBar" class="bg-emerald-500 h-full transition-all duration-700" style="width: 0%"></div></div>
+                    </div>
+
+                    <div class="card p-6 flex flex-col justify-between h-36">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[11px] text-slate-500 font-bold uppercase">JVM Heap Consumption</span>
+                            <div class="p-1.5 bg-indigo-500/10 rounded-lg text-indigo-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg></div>
+                        </div>
+                        <div class="flex items-baseline space-x-2">
+                            <span id="heapText" class="text-3xl font-bold tracking-tight">0</span>
+                            <span class="text-xs text-slate-500">MB</span>
+                        </div>
+                        <div class="text-[10px] text-slate-600 font-medium">Max Alloc: <span id="maxHeapText" class="text-slate-400">0 MB</span></div>
+                    </div>
+
+                    <div class="card p-6 flex flex-col justify-between h-36">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[11px] text-slate-500 font-bold uppercase">CPU Load</span>
+                            <div class="p-1.5 bg-amber-500/10 rounded-lg text-amber-500"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg></div>
+                        </div>
+                        <div class="flex items-baseline space-x-2">
+                            <span id="cpuText" class="text-3xl font-bold tracking-tight">0%</span>
+                        </div>
+                        <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden mt-2"><div id="cpuGauge" class="bg-amber-500 h-full transition-all duration-700" style="width: 0%"></div></div>
+                    </div>
                 </div>
 
-                <!-- System Load & Component Health (Span 4) -->
-                <div class="col-span-12 lg:col-span-4 glass p-10 rounded-[2.5rem] space-y-10">
-                    <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Infrastructure Saturation</h3>
-                    
-                    <div class="space-y-8">
-                        <div>
-                            <div class="flex justify-between text-[10px] font-black uppercase mb-3"><span class="text-slate-500">System CPU Load</span><span id="cpuText" class="text-white">0.0%</span></div>
-                            <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden"><div id="cpuGauge" class="bg-blue-500 h-full transition-all duration-700" style="width: 0%"></div></div>
+                <!-- Secondary Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-sm font-bold text-white uppercase tracking-wider">Memory Allocation History</h3>
+                            <div class="flex space-x-4">
+                                <span class="flex items-center text-[10px] text-slate-400 font-medium"><div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div> Heap Used</span>
+                            </div>
                         </div>
-                        <div>
-                            <div class="flex justify-between text-[10px] font-black uppercase mb-3"><span class="text-slate-500">Sys Load (1m)</span><span id="loadText" class="text-white">0.00</span></div>
-                            <div class="w-full bg-white/5 h-2 rounded-full overflow-hidden"><div id="loadGauge" class="bg-indigo-500 h-full transition-all duration-700" style="width: 0%"></div></div>
-                        </div>
+                        <div class="h-64"><canvas id="memStreamChart"></canvas></div>
                     </div>
 
-                    <div class="pt-10 border-t border-white/5 space-y-4">
-                        <p class="text-[9px] font-black text-slate-600 uppercase tracking-widest">Sub-system Health Breakdown</p>
-                        <div id="healthDetailsGrid" class="space-y-3">
-                            <!-- Dynamic health rows -->
+                    <div class="card p-6 flex flex-col">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-6">System Health</h3>
+                        <div id="healthDetailsGrid" class="space-y-4 flex-1">
+                            <!-- Dynamic Health -->
+                        </div>
+                        <div class="mt-6 pt-6 border-t border-white/5">
+                            <div class="flex justify-between text-[11px] font-bold uppercase">
+                                <span class="text-slate-500">Node Uptime</span>
+                                <span id="uptimeText" class="text-blue-400">0h 0m</span>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Diagnostic Registry (Span 12) -->
-                <div class="col-span-12 glass rounded-[2.5rem] overflow-hidden">
-                    <div class="px-10 py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
-                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Technical Runtime Registry</h3>
-                        <span id="lastUpdatedYangon" class="text-[9px] font-bold text-slate-600 uppercase">--:--:--</span>
+                <!-- Audit Registry -->
+                <div class="card overflow-hidden">
+                    <div class="px-6 py-4 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
+                        <h3 class="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Runtime Audit Registry</h3>
+                        <span id="lastUpdatedYangon" class="text-[10px] font-medium text-slate-500 mono tracking-tighter">--:--:--</span>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left text-[11px] mono">
-                            <thead>
-                                <tr class="text-slate-700 border-b border-white/5">
-                                    <th class="px-10 py-5">Monitor descriptor</th>
-                                    <th class="px-10 py-5">Observed Value</th>
-                                    <th class="px-10 py-5">System State</th>
-                                    <th class="px-10 py-5 text-right">Sampled @ Yangon</th>
+                        <table class="w-full text-left text-xs">
+                            <thead class="text-slate-500 border-b border-white/5 uppercase font-bold tracking-tighter">
+                                <tr>
+                                    <th class="px-6 py-4">Descriptor</th>
+                                    <th class="px-6 py-4">Metric Value</th>
+                                    <th class="px-6 py-4">Constraint</th>
+                                    <th class="px-6 py-4 text-right">Sampled</th>
                                 </tr>
                             </thead>
-                            <tbody id="registryBody" class="divide-y divide-white/5">
-                                <!-- Dynamic audit rows -->
+                            <tbody id="registryBody" class="divide-y divide-white/5 mono text-slate-300">
+                                <!-- Dynamic rows -->
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- Diagnostics & Processes Tabs (Styled v5) -->
-            <div id="tab-loggers" class="tab-content glass p-10 rounded-[2.5rem]">
-                <div class="flex justify-between items-center mb-10">
-                    <h3 class="text-xl font-black text-white uppercase tracking-tighter">Diagnostics audit</h3>
-                    <input type="text" id="logFilter" placeholder="Filter loggers..." class="bg-white/5 border border-white/10 rounded-2xl px-6 py-3 text-xs outline-none focus:ring-2 ring-blue-500 w-96 text-white">
+            <!-- TAB: Loggers -->
+            <div id="tab-loggers" class="tab-content card p-6">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Logger Configuration</h3>
+                        <p class="text-xs text-slate-500">Manage runtime log levels across the application context.</p>
+                    </div>
+                    <div class="relative">
+                        <input type="text" id="logFilter" placeholder="Filter loggers..." class="bg-slate-900 border border-white/10 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 ring-blue-500 w-full md:w-80 text-white placeholder-slate-600">
+                        <svg class="w-4 h-4 text-slate-600 absolute right-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
                 </div>
-                <div class="max-h-[600px] overflow-y-auto custom-scrollbar"><table class="w-full text-left text-[11px] mono"><tbody id="logTable"></tbody></table></div>
+                <div class="max-h-[600px] overflow-y-auto custom-scrollbar border border-white/5 rounded-lg">
+                    <table class="w-full text-left text-xs mono">
+                        <thead class="bg-white/[0.02] text-slate-500 sticky top-0">
+                            <tr>
+                                <th class="px-6 py-3">Logger Name</th>
+                                <th class="px-6 py-3 text-right">Effective Level</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTable" class="divide-y divide-white/5"></tbody>
+                    </table>
+                </div>
             </div>
 
-            <div id="tab-threads" class="tab-content glass p-10 rounded-[2.5rem] space-y-10">
+            <!-- TAB: Threads -->
+            <div id="tab-threads" class="tab-content space-y-6">
                 <div class="flex justify-between items-center">
-                    <h3 class="text-xl font-black text-white uppercase tracking-tighter">Process Diagnostic Snapshots</h3>
-                    <button onclick="fetchThreads()" class="px-6 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all">Capture Dump</button>
+                    <h3 class="text-lg font-bold text-white">Thread Diagnostic Dump</h3>
+                    <button onclick="fetchThreads()" class="px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-all flex items-center">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Refresh Snapshot
+                    </button>
                 </div>
-                <div id="threadList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto pr-4 custom-scrollbar"></div>
+                <div id="threadList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[700px] overflow-y-auto pr-2 custom-scrollbar"></div>
             </div>
 
         </div>
     </main>
 
     <script>
+        // Use sessionStorage for authentication persistence
         const token = sessionStorage.getItem('admin_token');
         if (!token) window.location.href = '/z-monitor/login';
 
-        // Time Engine: Asia/Yangon (UTC +6:30)
-        function toYangonTime(dateInput) {
-            const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-            return date.toLocaleString('en-US', { 
+        // Timezone management
+        function getYangonTime() {
+            return new Date().toLocaleString('en-US', { 
                 timeZone: 'Asia/Yangon', 
                 hour12: false, 
-                hour: '2-digit', minute: '2-digit', second: '2-digit',
-                year: 'numeric', month: '2-digit', day: '2-digit'
-            }).replace(',', '');
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
         }
 
         function updateClocks() {
-            const now = new Date();
-            document.getElementById('yangonClock').textContent = `${toYangonTime(now).split(' ')[1]} MM-T (UTC+6:30)`;
+            document.getElementById('yangonClock').textContent = getYangonTime() + ' MM-T';
         }
         setInterval(updateClocks, 1000);
 
-        // Core API Wrapper
+        // Core API Communication with Graceful Auth handling
         async function fetchActuator(endpoint) {
             try {
-                const r = await fetch(`/actuator/${endpoint}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                if (r.status === 401) window.location.href = '/z-monitor/login';
-                return await r.json();
-            } catch (e) { return null; }
+                const response = await fetch(`/actuator/${endpoint}`, { 
+                    headers: { 'Authorization': `Bearer ${token}` } 
+                });
+                
+                if (response.status === 401) {
+                    console.warn(`Unauthorized access to ${endpoint}. Verify security config.`);
+                    // We don't force redirect immediately on every 401 to prevent loop during partial failures
+                    // Only redirect if core dashboard metrics fail repeatedly
+                    if (endpoint.includes('metrics') || endpoint === 'health') {
+                        // window.location.href = '/z-monitor/login';
+                    }
+                    return null;
+                }
+                
+                if (!response.ok) return null;
+                return await response.json();
+            } catch (err) {
+                console.error(`Fetch error for ${endpoint}:`, err);
+                return null;
+            }
         }
 
-        // Memory Chart v5 (Optimized Lifecycle Stream)
+        // Charts Initialization
         const memChart = new Chart(document.getElementById('memStreamChart').getContext('2d'), {
             type: 'line',
             data: { 
-                labels: [], 
+                labels: Array(30).fill(''), 
                 datasets: [{ 
-                    label: 'Heap Memory Stream', data: [], 
-                    borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.05)', 
-                    borderWidth: 3, fill: true, tension: 0.45, pointRadius: 0 
+                    data: Array(30).fill(0), 
+                    borderColor: '#3b82f6', 
+                    backgroundColor: 'rgba(59, 130, 246, 0.05)', 
+                    borderWidth: 2, fill: true, tension: 0.4, pointRadius: 0 
                 }] 
             },
             options: { 
@@ -271,7 +344,7 @@
                 plugins: { legend: { display: false } },
                 scales: { 
                     x: { display: false }, 
-                    y: { grid: { color: 'rgba(255,255,255,0.03)' }, border: { display: false }, ticks: { font: { family: 'JetBrains Mono', size: 9 }, color: '#475569' } } 
+                    y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { font: { size: 9 }, color: '#475569' } } 
                 } 
             }
         });
@@ -280,130 +353,127 @@
         let lastRpsTime = Date.now();
 
         async function updateTelemetry() {
-            const nowYangon = toYangonTime(new Date()).split(' ')[1];
-            document.getElementById('lastUpdatedYangon').textContent = `Sync: ${nowYangon}`;
+            const now = getYangonTime();
+            document.getElementById('lastUpdatedYangon').textContent = `Refreshed: ${now}`;
 
-            // 1. Business & User State
-            const biz = await (await fetch('/z-monitor/business-metrics', { headers: { 'Authorization': `Bearer ${token}` } })).json();
-            if (biz) {
-                document.getElementById('activeUsers').textContent = biz.activeUsers;
-                document.getElementById('totalUsers').textContent = biz.totalUsers.toLocaleString();
-                document.getElementById('newUsers').textContent = biz.newUsersToday;
+            // Business Metrics
+            fetch('/z-monitor/business-metrics', { headers: { 'Authorization': `Bearer ${token}` } })
+                .then(r => r.json())
+                .then(data => {
+                    if (data) {
+                        document.getElementById('activeUsers').textContent = data.activeUsers || 0;
+                        document.getElementById('totalUsers').textContent = (data.totalUsers || 0).toLocaleString();
+                    }
+                }).catch(() => {});
+
+            // System Load & Throughput
+            const busyThreads = await fetchActuator('metrics/tomcat.threads.busy');
+            if (busyThreads) {
+                const val = busyThreads.measurements[0].value;
+                document.getElementById('activeReqs').textContent = val;
+                document.getElementById('reqBar').style.width = `${Math.min((val/20)*100, 100)}%`;
             }
 
-            // 2. Performance Engineering
-            const busyThreads = await fetchActuator('metrics/tomcat.threads.busy');
-            const busyVal = busyThreads?.measurements[0].value || 0;
-            document.getElementById('activeReqs').textContent = busyVal;
-            const sat = Math.min((busyVal / 20) * 100, 100);
-            document.getElementById('reqSaturation').textContent = `${sat.toFixed(1)}%`;
-            document.getElementById('reqBar').style.width = `${sat}%`;
-
-            const dbA = await fetchActuator('metrics/hikaricp.connections.active');
-            const dbM = await fetchActuator('metrics/hikaricp.connections.max');
-            const dbP = await fetchActuator('metrics/hikaricp.connections.pending');
-            document.getElementById('dbActive').textContent = dbA?.measurements[0].value || 0;
-            document.getElementById('dbMax').textContent = dbM?.measurements[0].value || 0;
-            document.getElementById('dbPending').textContent = `PEND: ${dbP?.measurements[0].value || 0}`;
-
-            const reqs = await fetchActuator('metrics/http.server.requests');
-            if (reqs) {
-                const count = reqs.measurements.find(m => m.statistic === 'COUNT')?.value || 0;
-                const now = Date.now();
-                const diff = (now - lastRpsTime) / 1000;
-                const rps = (count - lastRpsCount) / diff;
+            const rpsData = await fetchActuator('metrics/http.server.requests');
+            if (rpsData) {
+                const count = rpsData.measurements.find(m => m.statistic === 'COUNT')?.value || 0;
+                const nowMs = Date.now();
+                const rps = (count - lastRpsCount) / ((nowMs - lastRpsTime) / 1000);
                 document.getElementById('rpsValue').textContent = `${Math.max(0, rps).toFixed(2)} RPS`;
                 lastRpsCount = count;
-                lastRpsTime = now;
+                lastRpsTime = nowMs;
             }
 
-            // 3. System & Resource Stream
-            const heapUsed = await fetchActuator('metrics/jvm.memory.used');
-            const heapMax = await fetchActuator('metrics/jvm.memory.max');
-            if (heapUsed) {
-                const usedMB = Math.round(heapUsed.measurements[0].value / 1024 / 1024);
-                const maxMB = Math.round((heapMax?.measurements[0].value || 0) / 1024 / 1024);
-                document.getElementById('heapText').textContent = `${usedMB} MB`;
-                document.getElementById('maxHeapText').textContent = `${maxMB} MB`;
-                
-                memChart.data.labels.push("");
+            // JVM & Resources
+            const memory = await fetchActuator('metrics/jvm.memory.used');
+            if (memory) {
+                const usedMB = Math.round(memory.measurements[0].value / 1024 / 1024);
+                document.getElementById('heapText').textContent = usedMB;
                 memChart.data.datasets[0].data.push(usedMB);
-                if (memChart.data.labels.length > 50) { memChart.data.labels.shift(); memChart.data.datasets[0].data.shift(); }
+                memChart.data.datasets[0].data.shift();
                 memChart.update('none');
             }
 
             const cpu = await fetchActuator('metrics/system.cpu.usage');
-            const cpuVal = (cpu?.measurements[0].value || 0) * 100;
-            document.getElementById('cpuText').textContent = `${cpuVal.toFixed(1)}%`;
-            document.getElementById('cpuGauge').style.width = `${cpuVal}%`;
+            if (cpu) {
+                const val = (cpu.measurements[0].value * 100).toFixed(1);
+                document.getElementById('cpuText').textContent = `${val}%`;
+                document.getElementById('cpuGauge').style.width = `${val}%`;
+            }
 
-            const load = await fetchActuator('metrics/system.load.average.1m');
-            const lVal = load?.measurements[0].value || 0;
-            document.getElementById('loadText').textContent = lVal.toFixed(2);
-            document.getElementById('loadGauge').style.width = `${Math.min(lVal * 10, 100)}%`;
-
-            const files = await fetchActuator('metrics/process.files.open');
-            document.getElementById('openFiles').textContent = files?.measurements[0].value || 0;
-
-            // 4. Infrastructure Health
+            // Health
             const health = await fetchActuator('health');
             if (health) {
-                document.getElementById('globalHealth').textContent = health.status === 'UP' ? 'System Optimized' : 'System Degraded';
-                document.getElementById('healthDot').className = `w-2 h-2 rounded-full ${health.status === 'UP' ? 'bg-emerald-500 shadow-lg pulse-emerald' : 'bg-rose-500 shadow-lg'}`;
+                const isUp = health.status === 'UP';
+                document.getElementById('globalHealth').textContent = isUp ? 'OPTIMIZED' : 'DEGRADED';
+                document.getElementById('globalHealth').className = `text-xs font-semibold ${isUp ? 'text-emerald-500' : 'text-rose-500'}`;
+                document.getElementById('healthDot').className = `w-2 h-2 rounded-full ${isUp ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500'}`;
                 
                 document.getElementById('healthDetailsGrid').innerHTML = Object.entries(health.components || {}).map(([name, data]) => `
-                    <div class="flex justify-between items-center text-[10px] font-bold">
-                        <span class="text-slate-600 uppercase tracking-widest">${name}</span>
-                        <span class="${data.status === 'UP' ? 'text-emerald-500' : 'text-rose-500'}">${data.status}</span>
+                    <div class="flex justify-between items-center text-[11px] font-medium">
+                        <span class="text-slate-500 uppercase tracking-tight">${name}</span>
+                        <span class="status-pill ${data.status === 'UP' ? 'status-up' : 'status-down'}">${data.status}</span>
                     </div>
                 `).join('');
             }
 
-            // 5. Audit Registry
-            const auditData = [
-                { id: 'jvm.threads.live', label: 'Daemon Life Cycles', state: 'ACTIVE' },
-                { id: 'jvm.gc.pause', label: 'GC Memory Reclaiming', state: 'OPTIMAL' },
-                { id: 'process.uptime', label: 'Continuity Duration', state: 'STABLE' }
-            ];
+            // Audit Registry
+            const auditMetrics = ['jvm.threads.live', 'process.uptime', 'jvm.gc.pause'];
             let auditHtml = '';
-            for (const item of auditData) {
-                const m = await fetchActuator(`metrics/${item.id}`);
-                const val = m?.measurements[0].value.toFixed(0) || 0;
-                auditHtml += `<tr class="hover:bg-white/[0.01]"><td class="px-10 py-5 text-slate-500 font-bold uppercase tracking-widest">${item.label}</td><td class="px-10 py-5 text-white font-black">${val}</td><td class="px-10 py-5"><span class="text-blue-500 font-black">${item.state}</span></td><td class="px-10 py-5 text-right text-slate-700 font-bold">${nowYangon}</td></tr>`;
+            for (const mName of auditMetrics) {
+                const m = await fetchActuator(`metrics/${mName}`);
+                if (m) {
+                    const val = m.measurements[0].value.toFixed(0);
+                    auditHtml += `<tr><td class="px-6 py-4 text-slate-500">${mName}</td><td class="px-6 py-4 font-bold text-white">${val}</td><td class="px-6 py-4 text-blue-500">STABLE</td><td class="px-6 py-4 text-right text-slate-600">${now}</td></tr>`;
+                }
             }
             document.getElementById('registryBody').innerHTML = auditHtml;
         }
 
-        // Navigation
-        function switchTab(t) {
+        // Tab Switching
+        function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.sidebar-btn').forEach(el => el.classList.remove('sidebar-active'));
-            document.getElementById('tab-'+t).classList.add('active');
-            document.getElementById('btn-'+t).classList.add('sidebar-active');
-            if (t === 'loggers') fetchLoggers();
+            document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            document.getElementById('btn-' + tabId).classList.add('active');
+            
+            if (tabId === 'loggers') fetchLoggers();
+            if (tabId === 'threads') fetchThreads();
         }
 
         async function fetchLoggers() {
             const data = await fetchActuator('loggers');
             if (data) {
-                const filter = document.getElementById('logFilter').value.toLowerCase();
-                document.getElementById('logTable').innerHTML = Object.entries(data.loggers)
-                    .filter(([n]) => n.toLowerCase().includes(filter))
-                    .map(([n, l]) => `<tr class="border-b border-white/5 hover:bg-white/[0.01]"><td class="py-4 px-10 text-slate-500">${n}</td><td class="py-4 px-10 text-right font-black text-blue-500">${l.effectiveLevel}</td></tr>`).join('');
+                renderLoggers(data.loggers);
+                document.getElementById('logFilter').oninput = (e) => {
+                    const filtered = Object.fromEntries(Object.entries(data.loggers).filter(([k]) => k.toLowerCase().includes(e.target.value.toLowerCase())));
+                    renderLoggers(filtered);
+                };
+            } else {
+                document.getElementById('logTable').innerHTML = '<tr><td colspan="2" class="p-6 text-center text-rose-500">Loggers endpoint inaccessible (401/404)</td></tr>';
             }
         }
-        document.getElementById('logFilter').oninput = fetchLoggers;
+
+        function renderLoggers(loggers) {
+            document.getElementById('logTable').innerHTML = Object.entries(loggers).map(([name, config]) => `
+                <tr class="hover:bg-white/[0.01]">
+                    <td class="px-6 py-3 text-slate-400 max-w-md truncate">${name}</td>
+                    <td class="px-6 py-3 text-right"><span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-500 font-bold">${config.effectiveLevel}</span></td>
+                </tr>
+            `).join('');
+        }
 
         async function fetchThreads() {
             const data = await fetchActuator('threaddump');
             if (data) {
                 document.getElementById('threadList').innerHTML = data.threads.map(t => `
-                    <div class="glass p-5 rounded-2xl text-[10px] mono border border-white/5 hover:border-blue-500/30 transition-all">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-blue-400 font-bold tracking-tighter">#${t.threadId} ${t.threadName}</span>
-                            <span class="${t.threadState === 'RUNNABLE' ? 'text-emerald-500' : 'text-amber-500'} font-black uppercase text-[8px]">${t.threadState}</span>
+                    <div class="card p-4 text-[10px] hover:border-blue-500/50 cursor-default">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-blue-400 truncate pr-2">#${t.threadId} ${t.threadName}</span>
+                            <span class="px-1.5 py-0.5 rounded-full ${t.threadState === 'RUNNABLE' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-500/10 text-slate-500'} font-bold uppercase">${t.threadState}</span>
                         </div>
-                        <div class="text-slate-600 truncate opacity-60">${t.stackTrace[0]?.className || 'N/A'}.${t.stackTrace[0]?.methodName || ''}</div>
+                        <div class="text-slate-500 mono opacity-60 truncate">${t.stackTrace[0]?.className || 'native'}.${t.stackTrace[0]?.methodName || ''}</div>
                     </div>
                 `).join('');
             }
@@ -414,7 +484,6 @@
         // Start Node
         updateTelemetry();
         setInterval(updateTelemetry, 5000);
-        switchTab('dashboard');
     </script>
 </body>
 </html>

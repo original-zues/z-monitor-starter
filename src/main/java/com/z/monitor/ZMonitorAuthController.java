@@ -45,8 +45,11 @@ public class ZMonitorAuthController {
         if (match.isPresent()) {
             ZMonitorProperties.User user = match.get();
             if (user.getPassword() != null && user.getPassword().equals(req.getPassword())) {
+                String token = UUID.randomUUID().toString();
+                ZMonitorSecurityFilter.addToken(token);
+                
                 Map<String, Object> body = new HashMap<>();
-                body.put("token", UUID.randomUUID().toString());
+                body.put("token", token);
                 body.put("role", user.getRole() == null ? "ADMIN" : user.getRole());
                 body.put("name", user.getName() == null ? user.getUsername() : user.getName());
                 return ResponseEntity.ok(body);
