@@ -452,12 +452,25 @@
 
             // JVM & Resources
             const memory = await fetchActuator('metrics/jvm.memory.used');
+            const maxMem = await fetchActuator('metrics/jvm.memory.max');
             if (memory) {
                 const usedMB = Math.round(memory.measurements[0].value / 1024 / 1024);
                 document.getElementById('heapText').textContent = usedMB;
+                if (maxMem) {
+                    const maxMB = Math.round(maxMem.measurements[0].value / 1024 / 1024);
+                    document.getElementById('maxHeapText').textContent = `${maxMB} MB`;
+                }
                 memChart.data.datasets[0].data.push(usedMB);
                 memChart.data.datasets[0].data.shift();
                 memChart.update('none');
+            }
+
+            const uptime = await fetchActuator('metrics/process.uptime');
+            if (uptime) {
+                const seconds = uptime.measurements[0].value;
+                const h = Math.floor(seconds / 3600);
+                const m = Math.floor((seconds % 3600) / 60);
+                document.getElementById('uptimeText').textContent = `${h}h ${m}m`;
             }
 
             const cpu = await fetchActuator('metrics/system.cpu.usage');
