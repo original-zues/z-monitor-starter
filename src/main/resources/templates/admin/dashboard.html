@@ -80,8 +80,8 @@
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
             </div>
             <div>
-                <h1 class="text-sm font-bold tracking-tight">Z-MONITOR</h1>
-                <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">SRE Suite v6.0</p>
+                <h1 th:text="${appName}" class="text-sm font-bold tracking-tight uppercase truncate max-w-[120px]">Z-MONITOR</h1>
+                <p th:text="${environment}" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest italic">SRE Suite v6.0</p>
             </div>
         </div>
 
@@ -639,7 +639,8 @@
 
         // Start Node
         updateTelemetry();
-        setInterval(updateTelemetry, 5000);
+        const refreshInterval = [[${refreshInterval}]];
+        setInterval(updateTelemetry, refreshInterval);
     </script>
 </body>
 </html>

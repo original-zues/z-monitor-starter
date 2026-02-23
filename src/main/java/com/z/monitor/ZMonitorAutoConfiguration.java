@@ -19,8 +19,8 @@ public class ZMonitorAutoConfiguration {
     }
 
     @Bean
-    public ZMonitorDashboardController zMonitorDashboardController() {
-        return new ZMonitorDashboardController();
+    public ZMonitorDashboardController zMonitorDashboardController(ZMonitorProperties properties) {
+        return new ZMonitorDashboardController(properties);
     }
 
     @Bean

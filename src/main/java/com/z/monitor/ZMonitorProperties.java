@@ -9,6 +9,9 @@ import java.util.List;
 public class ZMonitorProperties {
 
     private List<User> users = Collections.emptyList();
+    private int refreshInterval = 5000;
+    private String appName = "Z-Monitor Client";
+    private String environment = "Production";
 
     public List<User> getUsers() {
         return users;
@@ -16,6 +19,30 @@ public class ZMonitorProperties {
 
     public void setUsers(List<User> users) {
         this.users = users;
+    }
+
+    public int getRefreshInterval() {
+        return refreshInterval;
+    }
+
+    public void setRefreshInterval(int refreshInterval) {
+        this.refreshInterval = refreshInterval;
+    }
+
+    public String getAppName() {
+        return appName;
+    }
+
+    public void setAppName(String appName) {
+        this.appName = appName;
+    }
+
+    public String getEnvironment() {
+        return environment;
+    }
+
+    public void setEnvironment(String environment) {
+        this.environment = environment;
     }
 
     public static class User {
